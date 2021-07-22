@@ -44,9 +44,6 @@ func main() {
 	sig := <-c
 	l.Println("Received terminate, graceful shutdown", sig)
 
-	tc, err := context.WithTimeout(context.Background(), 30*time.Second)
-	if err != nil {
-		l.Fatal("Error creating timeout")
-	}
+	tc, _ := context.WithTimeout(context.Background(), 30*time.Second)
 	s.Shutdown(tc)
 }
