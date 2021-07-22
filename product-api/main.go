@@ -9,7 +9,7 @@ import (
 
 	"context"
 
-	"github.com/lyx0/go-microservices/handlers"
+	"github.com/lyx0/go-microservices/product-api/handlers"
 )
 
 func main() {
