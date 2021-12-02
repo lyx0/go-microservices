@@ -42,7 +42,10 @@ func main() {
 	sig := <-sigChan
 	l.Println("Received terminate, graceful shutdown", sig)
 
-	tc, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	tc, err := context.WithTimeout(context.Background(), 30*time.Second)
+	if err != nil {
+		l.Fatal(err)
+	}
 	s.Shutdown(tc)
 
 }
