@@ -23,5 +23,4 @@ func (p *Products) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, "Unable to marshal json", http.StatusInternalServerError)
 		p.l.Fatal(err)
 	}
-
 }
