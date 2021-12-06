@@ -7,7 +7,7 @@ import (
 )
 
 type Product struct {
-	ID          int64   `json:"id"`
+	ID          int     `json:"id"`
 	Name        string  `json:"name"`
 	Description string  `json:"description"`
 	Price       float32 `json:"price"`
@@ -17,7 +17,7 @@ type Product struct {
 	DeletedOn   string  `json:"-"`
 }
 
-func (p *Products) FromJSON(r io.Reader) error {
+func (p *Product) FromJSON(r io.Reader) error {
 	e := json.NewDecoder(r)
 	return e.Decode(p)
 }
@@ -31,6 +31,16 @@ func (p *Products) ToJSON(w io.Writer) error {
 
 func GetProducts() Products {
 	return productList
+}
+
+func AddProduct(p *Product) {
+	p.ID = getNextID()
+	productList = append(productList, p)
+}
+
+func getNextID() int {
+	lp := productList[len(productList)-1]
+	return lp.ID + 1
 }
 
 var productList = []*Product{
