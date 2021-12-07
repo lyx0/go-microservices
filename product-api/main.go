@@ -6,16 +6,21 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/lyx0/go-microservices/product-api/handlers"
 )
 
-func main() {
-	l := log.New(os.Stdout, "product-api", log.LstdFlags)
+var (
+	bindAddress = ":8080"
+)
 
+func main() {
+
+	l := log.New(os.Stdout, "products-api ", log.LstdFlags)
+
+	// create the handlers
 	ph := handlers.NewProducts(l)
 
 	// create a new serve mux and register the handlers
@@ -26,37 +31,45 @@ func main() {
 
 	putRouter := sm.Methods(http.MethodPut).Subrouter()
 	putRouter.HandleFunc("/{id:[0-9]+}", ph.UpdateProducts)
+	putRouter.Use(ph.MiddlewareValidateProduct)
 
 	postRouter := sm.Methods(http.MethodPost).Subrouter()
 	postRouter.HandleFunc("/", ph.AddProduct)
+	postRouter.Use(ph.MiddlewareValidateProduct)
 
-	// sm.Handle("/products", ph).Methods("GET")
+	//sm.Handle("/products", ph)
 
-	s := &http.Server{
-		Addr:         ":8080",
-		Handler:      sm,
-		IdleTimeout:  120 * time.Second,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
+	// create a new server
+	s := http.Server{
+		Addr:         bindAddress,       // configure the bind address
+		Handler:      sm,                // set the default handler
+		ErrorLog:     l,                 // set the logger for the server
+		ReadTimeout:  5 * time.Second,   // max time to read request from the client
+		WriteTimeout: 10 * time.Second,  // max time to write response to the client
+		IdleTimeout:  120 * time.Second, // max time for connections using TCP Keep-Alive
 	}
 
+	// start the server
 	go func() {
-		if err := s.ListenAndServe(); err != nil {
-			l.Fatal(err)
+		l.Println("Starting server on port 8080")
+
+		err := s.ListenAndServe()
+		if err != nil {
+			l.Printf("Error starting server: %s\n", err)
+			os.Exit(1)
 		}
 	}()
 
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt)
-	signal.Notify(sigChan, syscall.SIGTERM)
+	// trap sigterm or interupt and gracefully shutdown the server
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, os.Kill)
 
-	sig := <-sigChan
-	l.Println("Received terminate, graceful shutdown", sig)
+	// Block until a signal is received.
+	sig := <-c
+	log.Println("Got signal:", sig)
 
-	tc, err := context.WithTimeout(context.Background(), 30*time.Second)
-	if err != nil {
-		l.Fatal(err)
-	}
-	s.Shutdown(tc)
-
+	// gracefully shutdown the server, waiting max 30 seconds for current operations to complete
+	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	s.Shutdown(ctx)
 }
