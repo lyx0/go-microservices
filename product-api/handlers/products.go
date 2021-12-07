@@ -50,7 +50,7 @@ func (p Products) UpdateProducts(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(rw, "Unable to convert string to int", http.StatusInternalServerError)
+		http.Error(rw, "Unable to convert id", http.StatusBadRequest)
 	}
 	p.l.Println("Handle PUT Product", id)
 
