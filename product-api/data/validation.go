@@ -75,7 +75,7 @@ func (v *Validation) Validate(i interface{}) ValidationErrors {
 	var returnErrs []ValidationError
 	for _, err := range errs {
 		// cast the FieldError into our ValidationError and append to the slice
-		ve := ValidationError{err.(validator.FieldError)}
+		ve := ValidationError{err}
 		returnErrs = append(returnErrs, ve)
 	}
 
@@ -88,9 +88,7 @@ func validateSKU(fl validator.FieldLevel) bool {
 	re := regexp.MustCompile(`[a-z]+-[a-z]+-[a-z]+`)
 	sku := re.FindAllString(fl.Field().String(), -1)
 
-	if len(sku) == 1 {
-		return true
-	}
+	return len(sku) == 1
 
 	return false
 }
