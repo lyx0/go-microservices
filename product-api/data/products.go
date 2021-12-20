@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"regexp"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -28,7 +29,16 @@ func (p *Product) FromJSON(r io.Reader) error {
 
 func (p *Product) Validate() error {
 	validate := validator.New()
+	validate.RegisterValidation("sku", validateSKU)
 	return validate.Struct(p)
+}
+
+func validateSKU(fl validator.FieldLevel) bool {
+	// sku is of format abc-asbasd-jasd
+	re := regexp.MustCompile(`[a-z]+-[a-z]+-[a-z]+`)
+	matches := re.FindAllString(fl.Field().String(), -1)
+
+	return len(matches) == 1
 }
 
 // Products is a collection of Product
